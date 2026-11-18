@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5558eab601ded764cab27f22f694f2cc, type: 3}
+  m_Name: ES_Guard
+  m_EditorClassIdentifier: Assembly-CSharp::ContainerShip.EnemyStats
+  maxHealth: 100
+  walkSpeed: 1.4
+  searchSpeed: 2.2
+  chaseSpeed: 3.8
+  turnSpeed: 240
+  viewRange: 24
+  viewAngle: 100
+  closeSenseRange: 2.5
+  darkVisibilityFactor: 0.3
+  awarenessGainPerSecond: 1.4
+  awarenessDecayPerSecond: 0.25
+  hearingMultiplier: 1
+  suspiciousLookTime: 4
+  searchDuration: 14
+  searchRadius: 7
+  loseTrackTime: 4
+  alertShareRadius: 15
+  attackRange: 18
+  reactionTime: 0.5
+  fireInterval: 0.3
+  damage: 9
+  accuracy: 0.55
+  gunshotNoiseRadius: 35
+  flashSusceptibility: 1

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64294c1bfd9412e4d871fb96a0db3421, type: 3}
+  m_Name: GD_Fragmentation
+  m_EditorClassIdentifier: Assembly-CSharp::ContainerShip.GrenadeData
+  displayName: Fragmentation
+  type: 0
+  startingCount: 2
+  fuseTime: 3.5
+  throwForce: 11
+  radius: 9
+  lethalRadius: 4.5
+  maxDamage: 160
+  explosionForce: 600
+  flashMaxDuration: 7
+  detonationNoiseRadius: 35
+  bounceNoiseRadius: 7
