@@ -43,6 +43,20 @@ namespace ContainerShip
         public static AudioClip Shot => Burst("shot", 0.14f, 0.28f, 4f, 95f, 0.5f, 0.55f);
         public static AudioClip PistolShot => Burst("pshot", 0.10f, 0.40f, 5f, 140f, 0.35f, 0.5f);
         public static AudioClip EnemyShot => Burst("eshot", 0.25f, 0.8f, 3f, 70f, 0.6f, 0.9f);
+        public static AudioClip CrossbowShot
+        {
+            get
+            {
+                var rng = new System.Random(77);
+                return Make("xbow", 0.4f, (t, u) =>
+                {
+                    float env = Mathf.Exp(-t * 13f);
+                    float twang = Mathf.Sin(2f * Mathf.PI * 150f * t * (1f + 0.25f * Mathf.Exp(-t * 25f))) + 0.5f * Mathf.Sin(2f * Mathf.PI * 310f * t);
+                    float click = (float)(rng.NextDouble() * 2.0 - 1.0) * Mathf.Exp(-t * 90f);
+                    return twang * env * 0.45f + click * 0.35f;
+                });
+            }
+        }
         public static AudioClip Step => Burst("step", 0.14f, 0.06f, 3f, 55f, 0.5f, 0.6f);
         public static AudioClip Explosion => Burst("boom", 1.4f, 0.04f, 2f, 40f, 0.9f, 1f);
         public static AudioClip Hurt => Burst("hurt", 0.25f, 0.1f, 3f, 70f, 0.7f, 0.8f);

@@ -39,12 +39,15 @@ namespace ContainerShip
             Destroy(gameObject);
         }
 
-        void Frag()
+        void Frag() { FragBlast(data, transform.position + Vector3.up * 0.1f, _thrower, gameObject); }
+
+        /// <summary>Fragmentation blast: line-of-sight area damage + physics force. Shared by frag grenades and crossbow bolts.</summary>
+        public static void FragBlast(GrenadeData data, Vector3 pos, GameObject source, GameObject self)
         {
-            Vector3 pos = transform.position + Vector3.up * 0.1f;
+            Transform selfT = self != null ? self.transform : null;
             Effects.Explosion(pos, data.radius);
             SoundFX.Play3D(SoundFX.Explosion, pos, 1f, 90f);
-            NoiseSystem.Emit(pos, data.detonationNoiseRadius, NoiseType.Explosion, gameObject);
+            NoiseSystem.Emit(pos, data.detonationNoiseRadius, NoiseType.Explosion, self);
 
             var cols = Physics.OverlapSphere(pos, data.radius, ~0, QueryTriggerInteraction.Ignore);
             var done = new HashSet<Health>();
@@ -56,12 +59,12 @@ namespace ContainerShip
                 var h = c.GetComponentInParent<Health>();
                 if (h == null || h.IsDead || done.Contains(h)) continue;
                 Vector3 p = c.ClosestPoint(pos);
-                if (!Ballistics.HasLineOfSight(pos, p, h.transform, transform)) continue; // cover blocks the blast
+                if (!Ballistics.HasLineOfSight(pos, p, h.transform, selfT)) continue; // cover blocks the blast
                 float d = Vector3.Distance(pos, p);
                 float dmg = d <= data.lethalRadius
                     ? data.maxDamage
                     : Mathf.Lerp(data.maxDamage, data.maxDamage * 0.1f, (d - data.lethalRadius) / Mathf.Max(0.01f, data.radius - data.lethalRadius));
-                h.TakeDamage(new DamageInfo { amount = dmg, point = pos, direction = (p - pos).normalized, source = _thrower, type = DamageType.Explosion });
+                h.TakeDamage(new DamageInfo { amount = dmg, point = pos, direction = (p - pos).normalized, source = source, type = DamageType.Explosion });
                 done.Add(h);
             }
         }

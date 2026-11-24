@@ -21,8 +21,8 @@ namespace ContainerShip.EditorTools
         const string SceneDir = Root + "/Scenes";
         public const string ScenePath = SceneDir + "/ContainerShip_Level01.unity";
 
-        static PlayerStats _playerStats; static WeaponData _aks, _mak; static GrenadeData _frag, _flash; static EnemyStats _guard;
-        static Grenade _fragPrefab, _flashPrefab;
+        static PlayerStats _playerStats; static WeaponData _aks, _mak; static CrossbowData _xbow; static GrenadeData _frag, _flash; static EnemyStats _guard;
+        static Grenade _fragPrefab, _flashPrefab; static CrossbowBolt _boltPrefab;
         static GameObject _enemyPrefab, _cameraPrefab, _playerPrefab;
 
         [MenuItem("Tools/Container Ship/Build Prototype (assets + prefabs + scene)")]
@@ -31,6 +31,7 @@ namespace ContainerShip.EditorTools
             EnsureFolders();
             CreateData();
             CreateGrenadePrefabs();
+            CreateBoltPrefab();
             CreateEnemyPrefab();
             CreateCameraPrefab();
             CreatePlayerPrefab();
@@ -95,6 +96,19 @@ namespace ContainerShip.EditorTools
                 d.fuseTime = 2.5f; d.radius = 12f; d.flashMaxDuration = 7f;
             });
             _guard = Asset<EnemyStats>("ES_Guard");
+            // Crossbow: 1 bolt loaded + 2 in reserve, 4 s reload, bolt blast = the frag grenade's (same GrenadeData asset).
+            _xbow = Asset<CrossbowData>("WD_Crossbow", d =>
+            {
+                d.displayName = "Crossbow (Explosive)"; d.automatic = false; d.damage = 40f; d.range = 100f; d.roundsPerMinute = 60f;
+                d.magazineSize = 1; d.startingReserveMagazines = 2; d.reloadTime = 4f; d.equipTime = 0.6f;
+                d.hipSpread = 1.2f; d.adsSpread = 0.1f; d.movingSpreadAdd = 1.5f;
+                d.recoilPitch = 1.2f; d.recoilYaw = 0.1f; d.recoilRecovery = 8f; d.kickback = 0.05f; d.adsFov = 55f;
+                d.hipPosition = new Vector3(0.17f, -0.19f, 0.42f); d.adsPosition = new Vector3(0f, -0.065f, 0.3f);
+                d.shotNoiseRadius = 5f; d.fireVolume = 0.5f;
+                d.blast = _frag;
+                d.boltSpeed = 70f; d.fuseTime = 1.5f;
+            });
+            if (_xbow.blast == null) { _xbow.blast = _frag; EditorUtility.SetDirty(_xbow); }
         }
 
         // ------------------------------------------------------------------ materials
@@ -202,6 +216,30 @@ namespace ContainerShip.EditorTools
             return prefab.GetComponent<Grenade>();
         }
 
+        static void CreateBoltPrefab()
+        {
+            var root = new GameObject("Bolt_Explosive");
+            var col = root.AddComponent<CapsuleCollider>(); col.direction = 2; col.radius = 0.02f; col.height = 0.3f;
+            var rb = root.AddComponent<Rigidbody>();
+            rb.mass = 0.15f; rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.interpolation = RigidbodyInterpolation.Interpolate; rb.freezeRotation = true;
+
+            // Bolt points along +Z; pivot at its center. Total length 0.3 m.
+            Part(root.transform, "Shaft", PrimitiveType.Cylinder, new Vector3(0f, 0f, -0.02f), new Vector3(0.014f, 0.12f, 0.014f), new Vector3(90f, 0f, 0f), Dark);
+            Part(root.transform, "Warhead", PrimitiveType.Cylinder, new Vector3(0f, 0f, 0.1f), new Vector3(0.04f, 0.04f, 0.04f), new Vector3(90f, 0f, 0f), Rust);
+            Part(root.transform, "Tip", PrimitiveType.Sphere, new Vector3(0f, 0f, 0.135f), Vector3.one * 0.04f, Vector3.zero, Rust);
+            Part(root.transform, "FinH", PrimitiveType.Cube, new Vector3(0f, 0f, -0.12f), new Vector3(0.05f, 0.002f, 0.04f), Vector3.zero, Dark);
+            Part(root.transform, "FinV", PrimitiveType.Cube, new Vector3(0f, 0f, -0.12f), new Vector3(0.002f, 0.05f, 0.04f), Vector3.zero, Dark);
+            var ind = Part(root.transform, "Indicator", PrimitiveType.Sphere, new Vector3(0f, 0.024f, 0.09f), Vector3.one * 0.02f, Vector3.zero, Red);
+            var lg = new GameObject("IndicatorLight"); lg.transform.SetParent(ind.transform, false);
+            var l = lg.AddComponent<Light>(); l.type = LightType.Point; l.color = Color.red; l.range = 2.5f; l.intensity = 0.6f; l.shadows = LightShadows.None;
+
+            var bolt = root.AddComponent<CrossbowBolt>();
+            bolt.indicator = ind.GetComponent<Renderer>(); bolt.indicatorLight = l; bolt.length = 0.3f;
+            Save(root, PrefabDir + "/Bolt_Explosive.prefab", out var prefab);
+            _boltPrefab = prefab.GetComponent<CrossbowBolt>();
+        }
+
         static void CreateEnemyPrefab()
         {
             var root = new GameObject("Enemy_Guard");
@@ -270,6 +308,64 @@ namespace ContainerShip.EditorTools
             var w = root.AddComponent<Weapon>(); w.data = _mak; w.muzzle = mz; return w;
         }
 
+        // Deliberately blocky like the other viewmodels: stock, two prod limbs, string, rail bolt.
+        static Crossbow BuildCrossbow(Transform parent)
+        {
+            var root = new GameObject("Crossbow"); root.transform.SetParent(parent, false);
+            Part(root.transform, "Stock", PrimitiveType.Cube, new Vector3(0f, 0f, -0.02f), new Vector3(0.04f, 0.045f, 0.5f), Vector3.zero, Dark);
+            Part(root.transform, "Grip", PrimitiveType.Cube, new Vector3(0f, -0.075f, -0.13f), new Vector3(0.03f, 0.09f, 0.04f), new Vector3(-10f, 0f, 0f), Dark);
+            Part(root.transform, "LimbR", PrimitiveType.Cube, new Vector3(0.11f, 0.01f, 0.21f), new Vector3(0.22f, 0.02f, 0.03f), new Vector3(0f, -15f, 0f), Dark);
+            Part(root.transform, "LimbL", PrimitiveType.Cube, new Vector3(-0.11f, 0.01f, 0.21f), new Vector3(0.22f, 0.02f, 0.03f), new Vector3(0f, 15f, 0f), Dark);
+            Part(root.transform, "String", PrimitiveType.Cube, new Vector3(0f, 0.01f, 0.238f), new Vector3(0.43f, 0.004f, 0.004f), Vector3.zero, Steel);
+            Part(root.transform, "RearSight", PrimitiveType.Cube, new Vector3(0f, 0.04f, -0.12f), new Vector3(0.012f, 0.02f, 0.012f), Vector3.zero, Dark);
+            Part(root.transform, "FrontSight", PrimitiveType.Cube, new Vector3(0f, 0.045f, 0.15f), new Vector3(0.008f, 0.03f, 0.008f), Vector3.zero, Dark);
+
+            var loaded = new GameObject("LoadedBolt").transform; loaded.SetParent(root.transform, false); loaded.localPosition = new Vector3(0f, 0.035f, 0.1f);
+            Part(loaded, "Shaft", PrimitiveType.Cylinder, new Vector3(0f, 0f, -0.02f), new Vector3(0.012f, 0.12f, 0.012f), new Vector3(90f, 0f, 0f), Steel);
+            Part(loaded, "Warhead", PrimitiveType.Cylinder, new Vector3(0f, 0f, 0.1f), new Vector3(0.032f, 0.04f, 0.032f), new Vector3(90f, 0f, 0f), Rust);
+            Part(loaded, "Tip", PrimitiveType.Sphere, new Vector3(0f, 0f, 0.135f), Vector3.one * 0.032f, Vector3.zero, Rust);
+
+            var w = root.AddComponent<Crossbow>(); w.data = _xbow; w.boltPrefab = _boltPrefab; w.loadedBolt = loaded.gameObject;
+            return w;
+        }
+
+        [MenuItem("Tools/Container Ship/Add Crossbow to existing Player prefab")]
+        public static void AddCrossbowToExistingPlayer()
+        {
+            EnsureFolders();
+            _frag = AssetDatabase.LoadAssetAtPath<GrenadeData>(DataDir + "/GD_Fragmentation.asset");
+            if (_frag == null) { Debug.LogError("GD_Fragmentation.asset not found. Run Build Prototype first."); return; }
+            _xbow = Asset<CrossbowData>("WD_Crossbow", d =>
+            {
+                d.displayName = "Crossbow (Explosive)"; d.automatic = false; d.damage = 40f; d.range = 100f; d.roundsPerMinute = 60f;
+                d.magazineSize = 1; d.startingReserveMagazines = 2; d.reloadTime = 4f; d.equipTime = 0.6f;
+                d.hipSpread = 1.2f; d.adsSpread = 0.1f; d.movingSpreadAdd = 1.5f;
+                d.recoilPitch = 1.2f; d.recoilYaw = 0.1f; d.recoilRecovery = 8f; d.kickback = 0.05f; d.adsFov = 55f;
+                d.hipPosition = new Vector3(0.17f, -0.19f, 0.42f); d.adsPosition = new Vector3(0f, -0.065f, 0.3f);
+                d.shotNoiseRadius = 5f; d.fireVolume = 0.5f;
+                d.blast = _frag; d.boltSpeed = 70f; d.fuseTime = 1.5f;
+            });
+            if (_xbow.blast == null) { _xbow.blast = _frag; EditorUtility.SetDirty(_xbow); }
+            CreateBoltPrefab();
+
+            string path = PrefabDir + "/Player.prefab";
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var wm = root.GetComponent<WeaponManager>();
+                var holder = root.transform.Find("Head/PlayerCamera/WeaponHolder");
+                if (wm == null || holder == null) { Debug.LogError("Player prefab has an unexpected layout; run Build Prototype instead."); return; }
+                foreach (var w in wm.weapons) if (w is Crossbow) { Debug.Log("Player prefab already has the crossbow."); return; }
+                var xb = BuildCrossbow(holder);
+                var list = new List<Weapon>(wm.weapons) { xb };
+                wm.weapons = list.ToArray();
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                Debug.Log("Crossbow added to Player prefab (key 5).");
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            AssetDatabase.SaveAssets();
+        }
+
         static void CreatePlayerPrefab()
         {
             var root = new GameObject("Player");
@@ -294,12 +390,12 @@ namespace ContainerShip.EditorTools
             light.type = LightType.Point; light.range = 20f; light.intensity = 1.1f; light.color = new Color(0.6f, 1f, 0.7f); light.shadows = LightShadows.Hard; light.enabled = false;
 
             var holder = new GameObject("WeaponHolder").transform; holder.SetParent(camGo.transform, false);
-            var aks = BuildAKS(holder); var mak = BuildMakarov(holder);
+            var aks = BuildAKS(holder); var mak = BuildMakarov(holder); var xb = BuildCrossbow(holder);
 
             pc.stats = _playerStats; pc.head = head; pc.playerCamera = cam;
             inter.player = pc;
             nv.nvLight = light;
-            wm.player = pc; wm.weapons = new[] { aks, mak };
+            wm.player = pc; wm.weapons = new Weapon[] { aks, mak, xb };
             gt.player = pc; gt.fragPrefab = _fragPrefab; gt.flashPrefab = _flashPrefab;
             Save(root, PrefabDir + "/Player.prefab", out _playerPrefab);
         }

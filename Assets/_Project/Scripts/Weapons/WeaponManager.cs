@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace ContainerShip
 {
-    /// <summary>Holds the weapons (index 0 = AKS-74U, 1 = Makarov), handles switching with keys 1/2, ticks the active weapon.</summary>
+    /// <summary>Holds the weapons (index 0 = AKS-74U, 1 = Makarov, 2 = Crossbow), handles switching with keys 1/2/5, ticks the active weapon.</summary>
     public class WeaponManager : MonoBehaviour
     {
         public PlayerController player;
@@ -23,6 +23,7 @@ namespace ContainerShip
             var input = InputReader.Instance;
             if (input.Slot1.WasPressedThisFrame()) Equip(0, true);
             if (input.Slot2.WasPressedThisFrame()) Equip(1, true);
+            if (input.Slot5.WasPressedThisFrame()) Equip(2, true);
             if (Current != null) Current.Tick(Time.deltaTime, input);
         }
 

@@ -1,20 +1,21 @@
 using UnityEngine;
 namespace ContainerShip
 {
-    /// <summary>One hitscan weapon. Behaviour comes from its WeaponData asset; WeaponManager calls Tick() when equipped.</summary>
+    /// <summary>One weapon (hitscan by default; subclasses such as Crossbow override Shoot()). Behaviour comes from its WeaponData asset; WeaponManager calls Tick() when equipped.</summary>
     public class Weapon : MonoBehaviour
     {
         public WeaponData data;
         public Transform muzzle;
         public bool available = true;
 
-        public int AmmoInMag { get; private set; }
+        public int AmmoInMag { get; protected set; }
         public int Reserve { get; private set; }
         public bool IsReloading { get; private set; }
         public int SpareMagazines => Mathf.CeilToInt(Reserve / (float)Mathf.Max(1, data.magazineSize));
 
-        PlayerController _player; Camera _cam;
-        float _nextFire, _reloadTimer, _equipTimer, _sprintBlend, _kick;
+        protected PlayerController _player; protected Camera _cam;
+        protected float _nextFire, _kick;
+        float _reloadTimer, _equipTimer, _sprintBlend;
 
         public void Init(PlayerController player, Camera cam)
         {
@@ -57,7 +58,7 @@ namespace ContainerShip
             UpdateViewmodel();
         }
 
-        void Shoot()
+        protected virtual void Shoot()
         {
             _nextFire = Time.time + 60f / data.roundsPerMinute;
             AmmoInMag--;
@@ -85,7 +86,7 @@ namespace ContainerShip
             NoiseSystem.Emit(_player.transform.position, data.shotNoiseRadius, NoiseType.SuppressedShot, _player.gameObject);
         }
 
-        void TryReload()
+        protected void TryReload()
         {
             if (IsReloading || AmmoInMag >= data.magazineSize || Reserve <= 0) return;
             IsReloading = true;

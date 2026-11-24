@@ -28,13 +28,14 @@ namespace ContainerShip
         public string slot2Binding = "<Keyboard>/2";
         public string slot3Binding = "<Keyboard>/3";
         public string slot4Binding = "<Keyboard>/4";
+        public string slot5Binding = "<Keyboard>/5";
         [Header("Equipment / Interaction")]
         public string nightVisionBinding = "<Keyboard>/n";
         public string interactBinding = "<Keyboard>/f";
         public string restartBinding = "<Keyboard>/r";
 
         public InputAction Move, Look, LeanLeft, LeanRight, Sprint, Fire, Aim, Reload, Throw,
-                           Slot1, Slot2, Slot3, Slot4, NightVision, Interact, Restart;
+                           Slot1, Slot2, Slot3, Slot4, Slot5, NightVision, Interact, Restart;
         readonly List<InputAction> _all = new List<InputAction>();
 
         void Awake()
@@ -57,6 +58,7 @@ namespace ContainerShip
             Slot2 = Make("Slot2", InputActionType.Button, slot2Binding);
             Slot3 = Make("Slot3", InputActionType.Button, slot3Binding);
             Slot4 = Make("Slot4", InputActionType.Button, slot4Binding);
+            Slot5 = Make("Slot5", InputActionType.Button, slot5Binding);
             NightVision = Make("NightVision", InputActionType.Button, nightVisionBinding);
             Interact = Make("Interact", InputActionType.Button, interactBinding);
             Restart = Make("Restart", InputActionType.Button, restartBinding);
